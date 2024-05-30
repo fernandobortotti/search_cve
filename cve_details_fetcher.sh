@@ -11,18 +11,20 @@ reset='\033[0m'
 ## Divider
 
 line_divider(){
-# Obter a largura do terminal
+# Prints a line of equal signs to the terminal with the length equal to the width of the terminal.
+#
+# This function calculates the width of the terminal using the `tput cols` command and stores it in the
+# `largura_terminal` variable. It then sets the `caractere_preenchimento` variable to an equal sign.
+# The function uses a `for` loop to iterate `largura_terminal` times and echoes the `caractere_preenchimento`
+# variable to the terminal. Finally, it echoes a new line character to the terminal.
+#
+# No parameters are required.
+# No return value.
 largura_terminal=$(tput cols)
-
-# Definir o caractere de preenchimento
 caractere_preenchimento="="
-
-# Repetir o caractere até o final da linha
 for ((i=0; i<$largura_terminal; i++)); do
   echo -n "$caractere_preenchimento"
 done
-
-# Exibir a linha preenchida
 echo
 }
 
@@ -37,6 +39,40 @@ if ! command -v jq &>/dev/null; then
     echo "jq is required but not installed. Please install jq and try again."
     exit 1
 fi
+
+if ! command -v searchsploit &> /dev/null
+then
+    if [ ! -f "/usr/share/exploitdb/searchsploit" ]; then
+        echo "Error: searchsploit is required but not installed."
+        echo "Please install searchsploit and try again."
+        echo "Option 1: Install searchsploit: sudo apt install searchsploit"
+        echo "Option 2: Download searchsploit: git clone https://gitlab.com/exploit-database/exploitdb.git /usr/share/exploitdb"
+        echo
+        exit 1
+    else
+        Searchsploit=/usr/share/exploitdb/searchsploit
+    fi
+fi
+
+## POC CVE github
+poc_cve_github(){
+  
+  year=$(echo $cve_id | awk -F"-" '{ print $1 }')
+  echo "+========+========+==========+========+========+==========+========+========+==========+"
+  echo -e "${blue}[+] GITHUB search result:${reset}"
+  html_url=$(curl -s "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/$year/CVE-$cve_id.json" | grep html_url | sed 's/,$//')
+
+  formatted_url=$(echo "$html_url" | sed 's/\\//g' | tail -n +2 | awk -F"\"html_url\":" '{ print $2}') #| sed 's/,$//g'
+
+    if [ -z "$formatted_url" ]; then
+        echo -e "${red} [-] No PoC in GitHub found for CVE-$cve_id${reset}."
+        return
+    else
+        echo -e "${blue}[+] PoC in GitHub: ${reset} "
+        echo -e "${green} $formatted_url ${reset}"
+    fi
+}
+
 
 # Function to fetch CVE details from the API
 fetch_cve_details() {
@@ -66,23 +102,31 @@ fetch_cve_details() {
     if [[ "$show_exploits" == "true" ]]; then
         echo -e "${blue} Exploits from CVE API:${reset}"
         
-        resultado=$(bash ~/ferramentasPentest/search_cve/exploitdb/searchsploit --cve $cve_id)
+        if [ "$Searchsploit" ]; then
+            resultado="$(bash $Searchsploit --cve $cve_id)"
+        else
+            resultado=$(searchsploit --cve $cve_id)
+        fi
 
         if [ $? -eq 0 ]; then
             numero_linhas=$(echo "$resultado" | wc -l)
 
             if [ $numero_linhas -lt 5 ]; then
-                echo -e "${red} Nenhum exploit encontrado para o CVE-$cve_id.${reset}"
+                echo -e "${red} [-] No exploits found for CVE-$cve_id in the exploitdb${reset}."
             else
                 echo -e "${green}$exploits${reset}"
                 echo -e "${green}"
                 echo -e "$resultado"
                 echo -e "${reset}"
-                echo "For view exploit: cat $HOME/search_cve/exploitdb/exploits/PATH"
-
+                echo "***************************************************************"
+                echo -e "${blue} [+] FOR SEE EXPLOITS:${reset}"
+                echo -e "${green} cat /usr/share/exploitdb/exploits/PATH${reset}"
             fi
 
         fi
+        poc_cve_github
+
+
 
     fi
     # Exibir a mensagem ajustada
@@ -116,7 +160,7 @@ if [[ -z "$cve_id" && -z "$cve_list" ]]; then
     echo "Please provide a CVE ID or a list of CVE IDs."
     echo "Usage: $0 --cve <CVE ID> [--ref <number of references to show>] [--e]"
     echo "Usage for a list of CVE IDs: $0 --list <CVE list file> [--ref <number of references to show>] [--e]"
-    echo "Example: $0 --cve 2022-0001 --ref 5 --e"
+    echo "Example: $0 --cve 2021-3156 --ref 5 --e"
     exit 1
 fi
 

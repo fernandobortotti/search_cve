@@ -10,11 +10,9 @@
 
 </p>
 
+This script fetches and displays details about specified CVE (Common Vulnerabilities and Exposures) IDs using the CIRCL CVE API. It also checks for available exploits related to the CVE IDs using `searchsploit` and [nomi-sec](https://github.com/nomi-sec/PoC-in-GitHub).
 
-This script fetches and displays details about specified CVE (Common Vulnerabilities and Exposures) IDs using the CIRCL CVE API. It also checks for available exploits related to the CVE IDs using `searchsploit`.
-
-
-![print](./img/print.png)
+![print](./img/poc.gif)
 
 ## Prerequisites
 
@@ -28,6 +26,12 @@ You can install them using the following commands:
 
 ```bash
 sudo apt-get install curl jq exploitdb
+```
+
+or you can use the following commands:
+
+```shell
+git clone https://gitlab.com/exploit-database/exploitdb.git
 ```
 
 ## Script Usage
@@ -77,6 +81,7 @@ To fetch and display details for multiple CVE IDs from a file:
 ./cve_details_fetcher.sh --list cve_list.txt --ref 5 --e
 ```
 
+![print](./img/print.png)
 
 ## Notes
 
