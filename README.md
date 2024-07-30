@@ -83,6 +83,11 @@ To fetch and display details for multiple CVE IDs from a file:
 
 ![print](./img/print.png)
 
+## Feature
+
+- [ ] Option to show only exploit.
+
+
 ## Notes
 
 - Ensure `searchsploit` is correctly configured and its path is added to your `PATH` environment variable.
